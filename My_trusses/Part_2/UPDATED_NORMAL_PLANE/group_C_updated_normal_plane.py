@@ -7,10 +7,6 @@ from nonLinAlgo import *
 
 import matplotlib.pyplot as plt
 
-from joblib import Parallel, delayed
-import multiprocessing
-
-
 from optparse import OptionParser
 import vtk
 import math
@@ -72,11 +68,13 @@ def main(nogui):
     truss_test = truss;
     
     #Non-linear algorithm
-    dlambda_0 = 1e-2
+    dlambda_0 = 1e-3
+    Id_0 = 10
+    psi_0 = 1e-10
     while dlambda_0 <= 1e-2:
-        Id = 10
+        Id = Id_0
         while Id <= 1000:
-            psi = 1e-10
+            psi = psi_0
             while psi <= 1:
                 dlamda0 = dlambda_0
                 algo = UpdatedNormalPlaneArcLengthAlgorithm(truss_test, toll, nItMax,dlamda0, psi, Id)
