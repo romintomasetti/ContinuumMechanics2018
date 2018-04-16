@@ -5,3 +5,6 @@
 *.pyc
 Initial_trusses_teaching_assistant/
 Statements/
+*.png
+*.gif
+*.bmp
