@@ -103,19 +103,21 @@ class NewtonRaphsonAlgorithm(NonLinearAlgorithm): # Newton-Raphson method
         lamda0 = 0.
         dlamda = self.dlamda
         step = 0
+        print ""
         while lamda < self.lamdaMax and not self.stopit:
             step+=1
             lamda = lamda0 + dlamda
             Delta_u = np.zeros((2*len(self.truss.nodes),1)) 
             
-            print '\n--- Newton Raphson - Load level, lambda =', lamda, ' ---'
+            print '>>> Newton Raphson - Load level, lambda = ', lamda, ' --- dlambda = ',dlamda,'        \r',
             
+            #Apply loads:
             self.truss.applyNodalLoads(lamda)
             
             Kt = self.truss.buildKt(self.computeTangentMethod)
-			#Calcule la difference entre les forces internes et externes
+            #Calcule la difference entre les forces internes et externes
             g = self.truss.getOOBF()  
-			# solve a linear matrix equation
+            # solve a linear matrix equation
             du = np.linalg.solve(Kt, -g)  
                 
             Delta_u+=du
@@ -193,6 +195,114 @@ class QuasiNewtonAlgorithm(NonLinearAlgorithm): # Quasi-Newton method
                 self.display(step, lamda)
                 lamda0 = lamda
         return 1
+        
+class NewtonRaphsonAlgorithm_inTime(NonLinearAlgorithm):
+    #Constructor:
+    def __init__(self, _truss, _toll, _nItMax, _dt, _t_max,_F_max, _period):
+        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax)
+        #Time step:
+        self.dt = _dt
+        #Maximum time before stopping:
+        self.t_max = _t_max
+        #Maximum force:
+        self.F_max = _F_max
+        #Period of the signal:
+        self.period = _period
+        
+    #Main function, only valid for a truss with 2 nodes !
+    #All loads are applied on the node 2 ! In the Y direction.
+    # DDL(X,Y) are fixed for node 1.
+    # DDL(X)   is  fixed for node 2.
+    def run(self):
+        #Check the time step that is given to be sure we go through all minimas and maximas
+        #    of the sawtooth loading:
+        if not self.period/self.dt == math.floor(self.period/self.dt):
+            sys.exit('The provided time step is not correct.')
+        
+        #Initialize the time:
+        t = 0.
+        
+        #Initialize nodal loads:
+        self.truss.nodes[1].applyTimeLoad('y', self.F_sawtooth)
+        
+        dt = self.dt
+        step = 0
+        #Loop on time:
+        while t < self.t_max:
+            #Increment the step:
+            step+=1
+            
+            #Increment time:
+            t+=dt
+            
+            #Allocated space:
+            Delta_u = np.zeros((2*len(self.truss.nodes),1))
+            
+            print '>>> Newton Raphson in time - Load time, t =', t, ' ---         \r',
+            
+            #Apply loads:
+            self.truss.applyNodalTimeLoads(t)
+            #Build the tangent stiffness matrix:
+            Kt = self.truss.buildKt(self.computeTangentMethod)
+            #Compute the out of balance forces:
+            g = self.truss.getOOBF()
+            #Solve the linear system:
+            du = np.linalg.solve(Kt, -g)
+            #Update positions:
+            Delta_u+=du
+            self.truss.incrementPositions(Delta_u)
+            #Compute the error:
+            error = self.computeError_time(g, t)
+            
+            #Usual N.-R. step:
+            current_iteration = 0
+            while error > self.toll :
+                if current_iteration > self.nItMax:    
+                    print ""
+                    print ">>> N.-R. in time failed at converging."
+                    sys.exit()
+                #Compute the tangent stiffness matrix:
+                Kt = self.truss.buildKt(self.computeTangentMethod)
+                #Compute the out of balance forces:
+                g = self.truss.getOOBF()
+                #Solve the linear system:
+                du = np.linalg.solve(Kt, -g)
+                #Update positions:
+                Delta_u+=du
+                self.truss.incrementPositions(Delta_u)
+                #Compute the error:
+                error = self.computeError_time(g, t)
+                current_iteration += 1
+            
+            self.truss.update()
+            self.archive(t, current_iteration)
+            self.archive_some_time_infos(t)
+            self.display(step, t)
+        
+        return 1
+        
+    #Compute a saw-tooth-like loading:
+    def F_sawtooth(self, t):
+        t_equ = t/self.period - math.floor(t/self.period) # t_equ is the equivalent time which has the same force value.
+        if(t_equ <= 0.25):
+            F = 4.0*self.F_max*t_equ
+        elif (t_equ > 0.25 and t_equ <= 0.75):
+            F = 2.0*self.F_max*(-2.0*t_equ+1.0)
+        else:
+            F = 4.0*self.F_max*(t_equ-1.0)
+        return F
+        
+    def archive_some_time_infos(self,t):
+        f1 = open('Some_more_infos.ascii','a')
+        f1.write('t=' + str(t) + ';dt=' + str(self.dt) + ';F_max=' + str(self.F_max))
+        f1.write(';T=' + str(self.period) + '\r')
+        f1.close()
+    
+    def computeError_time(self, g, t):
+        
+        error = abs(np.linalg.norm(g))*self.toll
+
+        return error
 
 class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
     
@@ -245,7 +355,7 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
             self.truss.incrementPositions(Delta_u)
             error = self.computeError(g, lamda)
             current_iteration +=1
-        if current_iteration >= self.nItMax:
+        if current_iteration > self.nItMax:
             print ">>> N.-R. step didn't converge in the spherical arc-length method."
             sys.exit()
         #Get the initial arc-length:
@@ -377,7 +487,7 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                 self.truss.update()
                 self.archive(lamda[0,0], current_iteration)
                 self.display(step, lamda)
-                self.archive_internal_forces()
+                #self.archive_internal_forces()
                 lamda0 = lamda
                 
                 #Check that we don't oscillate between two values of dlamda:

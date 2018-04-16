@@ -1,18 +1,19 @@
 %function read_output_part_2
 close all
 direct = ['D:\GOOGLE DRIVE\UNIVERSITY\MASTER 1\SECOND_QUADRIMESTER\Continuum Mechanics'...
-    '\Project\My_trusses\Part_2\'];
+    '\ContinuumMechanics2018\My_trusses\Part_2\'];
 
 ancienne_dir = pwd;
 cd(direct);
 
 %% SPHERICAL_ARC_LENGTH:
-files = {'SPHERICAL_ARC_LENGTH\Node_2_DISPLACEMENTS.ascii',...
-    'SPHERICAL_ARC_LENGTH\Node_3_DISPLACEMENTS.ascii',...
-    'SPHERICAL_ARC_LENGTH\Bar_2_internal_force.ascii',...
-    'SPHERICAL_ARC_LENGTH\Lambda.ascii'};
+method = 'UPDATED_NORMAL_PLANE';
+method = 'SPHERICAL_ARC_LENGTH';
+method = 'NEWTON_RAPHSON';
+files = {[method '\Node_2_DISPLACEMENTS.ascii'],...
+    [method '\Node_3_DISPLACEMENTS.ascii'],...
+    [method '\Lambda.ascii']};
 vector_names = {'ux2','uy2','ux3','uy3',...
-                'Fint1','Fint2','Fint3','Fint4',...
                 'lambda'};
 spherical.INFO = 'Contains everything for spherical a.-l.';
 counter_vector = 1;
@@ -37,6 +38,13 @@ for i = 1 : length(files)
     fclose(f);
 end
 spherical
-plot_struct(spherical)
+comet(spherical.uy2,spherical.lambda)
+%plot_struct(spherical)
+% createGifFromTwoVectors(spherical.ux2,...
+%     spherical.uy2,spherical.lambda,'test.gif')
+% configureFigure(figure)
+% plot(spherical.lambda,'*-')
+% xlabel('step')
+% ylabel('lambda')
 %% 
 %end

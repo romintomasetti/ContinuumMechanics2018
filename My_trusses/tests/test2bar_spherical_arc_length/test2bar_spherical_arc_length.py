@@ -53,7 +53,7 @@ def main(nogui):
     
     #Non-linear algorithm
     dlamda0 = 0.05
-    psi = 0.
+    psi = 1e-5
     Id = 5
     algo = ArcLengthAlgorithm(truss, tol, nItMax,dlamda0, psi, Id)
     

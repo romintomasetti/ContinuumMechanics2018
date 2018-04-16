@@ -25,22 +25,21 @@ subplot(2,2,4)
 plot(given.(names{5}),given.lambda)
 xlabel(names{5})
 ylabel(names{end})
-return
 
 %% Plot internal force:
-ampl1 = sqrt((given.Fint1).^2+(given.Fint2).^2);
-ampl2 = sqrt((given.Fint3).^2+(given.Fint4).^2);
-figure;
-subplot(121)
-hold on;
-plot(given.Fint1);
-plot(given.Fint2);
-legend('Fint1','Fint2');
-subplot(122);
-hold on;
-plot(given.Fint3);
-plot(given.Fint4);
-legend('Fint3','Fint4');
+% ampl1 = sqrt((given.Fint1).^2+(given.Fint2).^2);
+% ampl2 = sqrt((given.Fint3).^2+(given.Fint4).^2);
+% figure;
+% subplot(121)
+% hold on;
+% plot(given.Fint1);
+% plot(given.Fint2);
+% legend('Fint1','Fint2');
+% subplot(122);
+% hold on;
+% plot(given.Fint3);
+% plot(given.Fint4);
+% legend('Fint3','Fint4');
 
 %% Animation:
 a     = 0.75

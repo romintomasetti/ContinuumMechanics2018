@@ -26,8 +26,8 @@ def main(nogui):
     
     # Misc.
     l0 = math.sqrt(a**2 + b**2)
-    toll = 1e-10
-    nItMax = 60
+    toll = 1e-6
+    nItMax = 6
     
     #Nodes
     node1 = Node(1 ,0.0, 0.0)
@@ -58,20 +58,20 @@ def main(nogui):
     truss.fix(node4,'y')
     
     #Critical load
-    qcr = 1*(math.sqrt(3)*E_2*A_2*(b**3))/(9.0*(l0**3)) #It's the critical load divided by 2 since we consider just one bar!
+    qcr = 25*(math.sqrt(3)*E_2*A_2*(b**3))/(9.0*(l0**3)) #It's the critical load divided by 2 since we consider just one bar!
 
     #Loads
     node2.applyLoad('y', -1.5*qcr)
     node3.applyLoad('y', -1.5*qcr)
     
     #Use a copy of the truss.
-    truss_test = truss;
+    truss_test = truss
     
     #Non-linear algorithm
-    dlambda_0 = 1e-4
+    dlambda_0 = 1e-3
     Id_0 = 10
-    psi_0 = 1e-10
-    while dlambda_0 < 1e-2:
+    psi_0 = 0
+    while dlambda_0 <= 1e-2:
         Id = Id_0
         while Id <= 100:
             psi = psi_0
