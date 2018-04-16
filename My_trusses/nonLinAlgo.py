@@ -277,9 +277,20 @@ class NewtonRaphsonAlgorithm_inTime(NonLinearAlgorithm):
             self.truss.update()
             self.archive(t, current_iteration)
             self.archive_some_time_infos(t)
+            self.archive_PK2(t)
             self.display(step, t)
         
         return 1
+        
+    #Archive Pk2 stress in the bars:
+    def archive_PK2(self,t):
+        f1 = open('NR_in_time_PK2.ascii','a')
+        f1.write('t=' + str(t))
+        for bar in self.truss.bars:
+            pk2 = bar.getPK2Stress()
+            f1.write(';PK2_bar' + str(bar.nb) + '=' + str(pk2))
+        f1.write('\n')
+        f1.close()
         
     #Compute a saw-tooth-like loading:
     def F_sawtooth(self, t):
