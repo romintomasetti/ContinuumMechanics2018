@@ -26,8 +26,8 @@ def main(nogui):
     
     # Misc.
     l0 = math.sqrt(a**2 + b**2)
-    toll = 1e-6
-    nItMax = 6
+    toll = 1e-8
+    nItMax = 60
     
     #Nodes
     node1 = Node(1 ,0.0, 0.0)
@@ -69,7 +69,7 @@ def main(nogui):
     
     #Non-linear algorithm
     dlambda_0 = 1e-3
-    
+    print -1.5*qcr
     algo = NewtonRaphsonAlgorithm(truss,toll,nItMax,dlambda_0)
                 
     returned_value = algo.run()

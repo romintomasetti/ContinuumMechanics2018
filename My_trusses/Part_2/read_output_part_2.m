@@ -1,5 +1,5 @@
 %function read_output_part_2
-close all
+
 direct = ['D:\GOOGLE DRIVE\UNIVERSITY\MASTER 1\SECOND_QUADRIMESTER\Continuum Mechanics'...
     '\ContinuumMechanics2018\My_trusses\Part_2\'];
 
@@ -9,7 +9,7 @@ cd(direct);
 %% SPHERICAL_ARC_LENGTH:
 method = 'UPDATED_NORMAL_PLANE';
 method = 'SPHERICAL_ARC_LENGTH';
-method = 'NEWTON_RAPHSON';
+%method = 'NEWTON_RAPHSON';
 files = {[method '\Node_2_DISPLACEMENTS.ascii'],...
     [method '\Node_3_DISPLACEMENTS.ascii'],...
     [method '\Lambda.ascii']};
@@ -38,13 +38,26 @@ for i = 1 : length(files)
     fclose(f);
 end
 spherical
-comet(spherical.uy2,spherical.lambda)
-%plot_struct(spherical)
+figure
+plot(spherical.ux2,spherical.lambda)
+xlabel('ux2')
+return
+% xlabel('ux2')
+% ylabel('lambda')
+% return
+% figure
+% plot(spherical.lambda,'*-')
+% return
+plot_struct(spherical,method,0)
+return
 % createGifFromTwoVectors(spherical.ux2,...
 %     spherical.uy2,spherical.lambda,'test.gif')
-% configureFigure(figure)
-% plot(spherical.lambda,'*-')
-% xlabel('step')
-% ylabel('lambda')
+configureFigure(figure)
+X = 1:length(spherical.lambda);%length(spherical.lambda)-55:length(spherical.lambda);
+plot(X,spherical.lambda(X),'b-','MarkerFaceColor','red')
+xlabel('step')
+ylabel('$\lambda$')
+saveas(gcf,[method '_lambda.eps'],'epsc2');
 %% 
 %end
+

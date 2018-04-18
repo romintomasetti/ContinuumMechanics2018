@@ -16,8 +16,8 @@ def main(nogui):
     b = 1.0
     #sys.exit()
     l0 = math.sqrt(a**2 + b**2)
-    tol = 1
-    nItMax = 100
+    tol = 1e-9
+    nItMax = 1000
 
 
     
@@ -32,10 +32,10 @@ def main(nogui):
     #Critical load
     qcr = (math.sqrt(3)*E*A*(b**3))/(9.0*(l0**3)) #It's the critical load divided by 2 since we consider just one bar!
     #We go a little bit higher than the critical load:
-    F_max = qcr*1.2
+    F_max = -qcr*1.2
     print F_max
     #Max time before stopping:
-    t_max = 4.0
+    t_max = 2.0
     #Time step:
     dt = 0.005
     #Period:

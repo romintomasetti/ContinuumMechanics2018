@@ -1,4 +1,5 @@
 function read_output_newton_in_time
+close all;
 %% Open files:
 f_infos = fopen('Some_more_infos.ascii');
 f_node2 = fopen('Node_2_DISPLACEMENTS.ascii');
@@ -37,6 +38,7 @@ while ~feof(f_PK2)
     PK2(counter) = R(3);
     counter = counter + 1;
 end
+fclose(f_PK2);
 
 %% Compute the applied load:
 F = zeros(1,length(t));
@@ -89,8 +91,8 @@ for i = 1 : length(t)
     time    = [time    t(i)];
     loading = [loading F(i)];
     set(h2,'XData',time,'YData',loading);
-    drawnow;
-    pause(0.05);
+    %drawnow;
+    %pause(0.05);
 end
 
 %% Plot the stresses:
@@ -104,7 +106,6 @@ subplot(1,2,2);
 plot(uy2,PK2,'.-');
 xlabel('uy2 [??]');
 ylabel('PK2 stress [???]');
-
 
 end
 

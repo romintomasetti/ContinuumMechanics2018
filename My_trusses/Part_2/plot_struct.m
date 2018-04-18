@@ -1,31 +1,43 @@
-function plot_struct(given)
+function plot_struct(given,method,save)
 disp('>> plot_struct(begin)');
 %% Get the field names:
 names = fieldnames(given)
 given
 nbr   = length(names);
 
-figure;
 %% Plot fields 2 and 3 together:
-subplot(2,2,1);
-plot(given.(names{2}),given.lambda)
-xlabel(names{2})
-ylabel(names{end})
-subplot(2,2,2)
-plot(given.(names{3}),given.lambda)
-xlabel(names{3})
-ylabel(names{end})
+configureFigure(figure);
+plot(given.(names{2}),given.lambda,'ro','MarkerFaceColor','red',...
+    'MarkerSize',2)
+xlabel('$u_{(2,x)}$')
+ylabel('$\lambda$')
+if save == 1
+    saveas(gcf,[method '_ux2.eps'],'epsc2');
+end
+
+configureFigure(figure);
+plot(given.(names{3}),given.lambda,'ro','MarkerFaceColor','red',...
+    'MarkerSize',2)
+xlabel('$u_{(2,y)}$')
+ylabel('$\lambda$')
+if save == 1
+    saveas(gcf,[method '_uy2.eps'],'epsc2');
+end
 
 %% Plot fields 4 and 5 together:
-subplot(2,2,3);
-plot(given.(names{4}),given.lambda)
-xlabel(names{4})
-ylabel(names{end})
-subplot(2,2,4)
-plot(given.(names{5}),given.lambda)
-xlabel(names{5})
-ylabel(names{end})
-
+% configureFigure(figure);
+% plot(given.(names{4}),given.lambda,'ro','MarkerFaceColor','red',...
+%     'MarkerSize',2)
+% xlabel('$u_{(3,x)}$')
+% ylabel('$\lambda$')
+% saveas(gcf,[method '_ux3.eps'],'epsc2')
+% 
+% configureFigure(figure);
+% plot(given.(names{5}),given.lambda,'ro','MarkerFaceColor','red',...
+%     'MarkerSize',2)
+% xlabel('$u_{(3,y)}$')
+% ylabel('$\lambda$')
+% saveas(gcf,[method '_uy3.eps'],'epsc2')
 %% Plot internal force:
 % ampl1 = sqrt((given.Fint1).^2+(given.Fint2).^2);
 % ampl2 = sqrt((given.Fint3).^2+(given.Fint4).^2);
@@ -42,6 +54,7 @@ ylabel(names{end})
 % legend('Fint3','Fint4');
 
 %% Animation:
+%return
 a     = 0.75
 b     = 0.25
 alpha = 30*pi/180

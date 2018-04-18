@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 
 class NonLinearAlgorithm: # Father class for all the non-linear algorithms
     
-    def __init__(self, _truss, _toll, _nItMax):
+    def __init__(self, _truss, _toll, _nItMax,_computeTangentMethod):
         self.truss = _truss                     # The truss
         self.toll = _toll                       # Tolerance used to assess convergence
         self.nItMax = _nItMax                   # Maximum number of iterations
         self.lamdaMax = 1.0                     # Maximum value for lamda (a priori, it can be different from 1)
         self.stopit = False                     # Only used by the GUI
         self.cleanWorkspace()                   # Run at the beginning of the simulation to clean the workspace: all the old result files will be deleted
-        self.computeTangentMethod = 'analytic'  # Or 'numeric' -> Used in bar.buildKt()
+        self.computeTangentMethod = _computeTangentMethod  # Or 'numeric' -> Used in bar.buildKt()
         self.dhook = None                       # Only used by the GUI
         
     def display(self, step, lamda):
@@ -317,13 +317,14 @@ class NewtonRaphsonAlgorithm_inTime(NonLinearAlgorithm):
 
 class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
     
-    def __init__(self, _truss, _toll, _nItMax, _dlamda, _psi, _Id): 
+    def __init__(self, _truss, _toll, _nItMax, _dlamda, _psi, _Id, _applyCorrectiveMethod,_computeTangentMethod): 
         
-        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax)
+        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax,_computeTangentMethod)
         self.dlamda = _dlamda
         self.psi = _psi
         self.Id = _Id # Ideal number of iterations per step
         self.nItMax = _nItMax
+        self.applyCorrectiveMethod = _applyCorrectiveMethod
         
     def run(self):
         lamda = 0.
@@ -380,12 +381,19 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
         #####################
         ## PREDICTOR PHASE ##
         #####################
+        
+        #We want to track oscillations:
         counter_oscillating = 0
         boolean_oscillating = 0
+        counter_applied_corrective = 0
+        val = 0
+        bool_corr = 0
+        
         
         while lamda < self.lamdaMax and not self.stopit:
             if step == 6e3:
                 return -7
+            
             dlamda_previous = dlamda
             
             step+=1
@@ -404,7 +412,7 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
             #Try to invert Kt:
             try:
                 Kt_inv = np.linalg.inv(Kt)
-            except numpy.linalg.LinAlgError:
+            except np.linalg.LinAlgError:
                 # Not invertible. Skip this one.
                 print "Kt is not invertible"
                 print(Kt)
@@ -426,14 +434,28 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                     dlamda = (-np.transpose(deltaP).dot(deltaPt) + Ct1) / (np.transpose(deltaPt).dot(deltaPt) + self.psi**2 * np.transpose(qef).dot(qef))       
                 else:
                     dlamda = (-np.transpose(deltaP).dot(deltaPt) - Ct1) / (np.transpose(deltaPt).dot(deltaPt) + self.psi**2 * np.transpose(qef).dot(qef))       
-
+                   
+                ##############################
+                ## APPLY CORRECTIVE PROCESS ##
+                ##############################
+                MAXX = 300
+                if self.applyCorrectiveMethod == 1 and counter_oscillating > 10 and counter_applied_corrective < MAXX:
+                    counter_applied_corrective += 1
+                    if counter_applied_corrective == 1:
+                        du_corr = np.linalg.solve(Kt_inv, -g);
+                        val = qef.T.dot(du_corr)
+                    if val < 0:
+                        dlamda = (-np.transpose(deltaP).dot(deltaPt) + Ct1) / (np.transpose(deltaPt).dot(deltaPt) + self.psi**2 * np.transpose(qef).dot(qef))
+                    else:
+                        dlamda = (-np.transpose(deltaP).dot(deltaPt) - Ct1) / (np.transpose(deltaPt).dot(deltaPt) + self.psi**2 * np.transpose(qef).dot(qef))
+                    bool_corr = 1
+                
                 #Update du:
                 du = deltaP + dlamda*deltaPt
                 Delta_u+=du
                 lamda = lamda0 + dlamda
                 self.truss.incrementPositions(Delta_u)
                 error = self.computeError(g, Kt)
-                #print "Initial error is ", error
                 
                 #####################
                 ## CORRECTOR PHASE ##
@@ -484,15 +506,18 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         error = self.computeError(g0, lamda)
                         current_iteration += 1
                         
+                if error > self.toll:
+                    sys.exit('Cannot converge. Increase nItMax or toll')
                        
                 if current_iteration != 0:    
                     #Update deltaL:
                     DeltaL = DeltaL0*math.sqrt(float(self.Id)/current_iteration) 
 
-                else :
-                    print "Should not go here !"
-                    sys.exit()
-                    
+                else:
+                    #update the deltaL variable with a default step:
+                    DeltaL = DeltaL0*math.sqrt(float(self.Id)/1.2)
+                    #Note: 1.2 is chosen quite arbitrarily.
+                
                 print ">> Sph. arc-len. :: pred. at step ",step," ----- lambda: ",lamda," --- dlambda: ",dlamda,"--- dlambda_previous: ",dlamda_previous,"         \r",
                 #Update the truss:
                 self.truss.update()
@@ -510,7 +535,7 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         counter_oscillating -= 1
                     if dlamda_previous > 0 and dlamda > 0:
                         counter_oscillating -= 1
-                    if counter_oscillating > 50:
+                    if counter_oscillating > 50 and not self.applyCorrectiveMethod == 1:
                         #boolean_oscillating = 1
                         counter_oscillating = 0
                         print ""
@@ -518,9 +543,12 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         return -77
                 else:
                     #print " >>> In undef.  : ",abs(abs(dlamda_previous_at_beginning_of_pred)-abs(dlamda))
-                    counter_oscillating = 0
-                    boolean_oscillating = 0
-  
+                    if not self.applyCorrectiveMethod == 1:
+                        counter_oscillating = 0
+                        boolean_oscillating = 0
+                    
+                if step > 1000:
+                    sys.exit("Je quitte a 650 !")
         
         return 1
 

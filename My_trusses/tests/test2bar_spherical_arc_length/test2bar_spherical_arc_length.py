@@ -20,7 +20,7 @@ def main(nogui):
     #sys.exit()
     l0 = math.sqrt(a**2 + b**2)
     tol = 10**(-6)
-    nItMax = 3
+    nItMax = 30
     
     #Nodes
     node1 = Node(1, 0.0, 0.0)
@@ -55,7 +55,7 @@ def main(nogui):
     dlamda0 = 0.05
     psi = 1e-5
     Id = 5
-    algo = ArcLengthAlgorithm(truss, tol, nItMax,dlamda0, psi, Id)
+    algo = ArcLengthAlgorithm(truss, tol, nItMax,dlamda0, psi, Id,0,'numeric')
     
     #GUI --> if you want to run a test without GUI: in a command window type (without the quotation marks) 'python test.py --nogui'
     if nogui:

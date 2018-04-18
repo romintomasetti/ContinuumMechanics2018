@@ -69,8 +69,9 @@ def main(nogui):
     
     #Non-linear algorithm
     dlambda_0 = 1e-3
-    Id_0 = 10
-    psi_0 = 0
+    Id_0 = 20
+    psi_0 = 1e-8
+    print -1.5*qcr
     while dlambda_0 <= 1e-2:
         Id = Id_0
         while Id <= 100:
@@ -79,7 +80,7 @@ def main(nogui):
                 dlamda0 = dlambda_0
                 #algo = UpdatedNormalPlaneArcLengthAlgorithm(truss_test, toll, nItMax,dlamda0, psi, Id)
                 #algo = NewtonRaphsonAlgorithm(truss,toll,nItMax,dlamda0)
-                algo = ArcLengthAlgorithm(truss,toll,nItMax,dlamda0,psi,Id)
+                algo = ArcLengthAlgorithm(truss,toll,nItMax,dlamda0,psi,Id,1)
                 #algo = IncrementalAlgorithm(truss,dlamda0)
                 print "Starting with (",dlamda0,",",Id,",",psi,")."
                 returned_value = algo.run()
