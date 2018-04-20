@@ -147,9 +147,9 @@ class NewtonRaphsonAlgorithm(NonLinearAlgorithm): # Newton-Raphson method
 
 class QuasiNewtonAlgorithm(NonLinearAlgorithm): # Quasi-Newton method
     
-    def __init__(self, _truss, _toll, _nItMax, _dlamda): 
+    def __init__(self, _truss, _toll, _nItMax, _dlamda, _Kt_method): 
         
-        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax)
+        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax,_Kt_method)
         self.dlamda = _dlamda
     
     def run(self):
@@ -199,7 +199,7 @@ class QuasiNewtonAlgorithm(NonLinearAlgorithm): # Quasi-Newton method
 class NewtonRaphsonAlgorithm_inTime(NonLinearAlgorithm):
     #Constructor:
     def __init__(self, _truss, _toll, _nItMax, _dt, _t_max,_F_max, _period):
-        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax)
+        NonLinearAlgorithm.__init__(self, _truss, _toll, _nItMax,'')
         #Time step:
         self.dt = _dt
         #Maximum time before stopping:
@@ -326,6 +326,24 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
         self.nItMax = _nItMax
         self.applyCorrectiveMethod = _applyCorrectiveMethod
         
+    def archive_truss_(self,step,lamda):
+            str_ = '_'+str(self.dlamda)+'_'+str(self.Id)+'_'+str(self.psi)
+            str_ = str_+'_'+'_'+str(self.nItMax)+'_'+str(self.toll)
+            
+            f1 = open(('Lambda'+str_+'.ascii'),'a')
+            f1.write(str(lamda)+'\n')
+            f1.close()
+            for node in self.truss.nodes:
+                f3 = open(('Node_'+str(node.nb)+'_POSITION'+str_+'.ascii'),'a')
+                f3.write(str(node.x)+'   '+str(node.y)+'\n')
+                f3.close()
+                f4 = open(('Node_'+str(node.nb)+'_DISPLACEMENTS'+str_+'.ascii'),'a')
+                f4.write(str(node.u)+'   '+str(node.v)+'\n')
+                f4.close()
+                f5 = open(('Node_'+str(node.nb)+'_F_EXT'+str_+'.ascii'),'a')
+                f5.write(str(node.Fx)+'   '+str(node.Fy)+'\n')
+                f5.close()
+        
     def run(self):
         lamda = 0.
         lamda0 = 0.
@@ -378,7 +396,9 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
         self.truss.update()
         self.archive(lamda, current_iteration)
         self.display(step, lamda) 
-        #####################
+        self.archive_truss_(step,lamda)
+        
+        #########################################
         ## PREDICTOR PHASE ##
         #####################
         
@@ -389,10 +409,17 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
         val = 0
         bool_corr = 0
         
+        RESTART_ = 0
         
         while lamda < self.lamdaMax and not self.stopit:
             if step == 6e3:
                 return -7
+            
+            #Not yet implemented !
+            if RESTART_ == 1:
+                self.truss.resetPositions()
+                print ''
+                print 'truss has been reset to previous !',DeltaL,current_iteration
             
             dlamda_previous = dlamda
             
@@ -484,8 +511,12 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         a2 = 2 * (np.transpose(deltaPt).dot(Delta_u+deltaP) + dlamda*self.psi**2*np.transpose(qef).dot(qef))
                         a3 = np.transpose(Delta_u+deltaP).dot(Delta_u+deltaP) + dlamda**2 *self.psi**2*np.transpose(qef).dot(qef) - DeltaL**2
                         #Compute the roots of the second order equation (15):
-                        lamda1 = ( -a2 + math.sqrt(a2**2 - 4*a1*a3)) / (2*a1)
-                        lamda2 = ( -a2 - math.sqrt(a2**2 - 4*a1*a3)) / (2*a1)
+                        try:
+                            lamda1 = ( -a2 + math.sqrt(a2**2 - 4*a1*a3)) / (2*a1)
+                            lamda2 = ( -a2 - math.sqrt(a2**2 - 4*a1*a3)) / (2*a1)
+                        except:
+                            print a1 , a2 , a3, a2**2 - 4*a1*a3, lamda
+                            sys.exit()
                         du1 = deltaP + lamda1*deltaPt
                         du2 = deltaP + lamda2*deltaPt
                         #Compute the cosinus of the angle:
@@ -506,28 +537,34 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         error = self.computeError(g0, lamda)
                         current_iteration += 1
                         
-                if error > self.toll:
-                    sys.exit('Cannot converge. Increase nItMax or toll')
+                # if error > self.toll:
+                    # RESTART_ = 1
+                # else:
+                    # RESTART_ = 0
                        
-                if current_iteration != 0:    
+                if current_iteration != 0 :#and RESTART_ == 0:    
                     #Update deltaL:
                     DeltaL = DeltaL0*math.sqrt(float(self.Id)/current_iteration) 
 
-                else:
+                else:#if RESTART_ == 0:
                     #update the deltaL variable with a default step:
                     DeltaL = DeltaL0*math.sqrt(float(self.Id)/1.2)
                     #Note: 1.2 is chosen quite arbitrarily.
+                # else:
+                    # DeltaL = 0.8*DeltaL
                 
-                print ">> Sph. arc-len. :: pred. at step ",step," ----- lambda: ",lamda," --- dlambda: ",dlamda,"--- dlambda_previous: ",dlamda_previous,"         \r",
-                #Update the truss:
-                self.truss.update()
-                self.archive(lamda[0,0], current_iteration)
-                self.display(step, lamda)
-                #self.archive_internal_forces()
-                lamda0 = lamda
+                if RESTART_ == 0:
+                    print ">> Sph. arc-len. :: pred. at step ",step," ----- lambda: ",lamda," --- dlambda: ",dlamda,"--- dlambda_previous: ",dlamda_previous,"         \r",
+                    #Update the truss:
+                    self.truss.update()
+                    self.archive(lamda[0,0], current_iteration)
+                    self.display(step, lamda)
+                    self.archive_truss_(step,lamda)
+                    #self.archive_internal_forces()
+                    lamda0 = lamda
                 
                 #Check that we don't oscillate between two values of dlamda:
-                if abs(abs(dlamda_previous)-abs(dlamda)) < 1e-6:
+                if abs(abs(dlamda_previous)-abs(dlamda)) < 1e-5:
                     #print "Oscillating!"
                     counter_oscillating += 1
                     # Check the signs were opposite!
@@ -547,10 +584,11 @@ class ArcLengthAlgorithm(NonLinearAlgorithm): # Arc-length method
                         counter_oscillating = 0
                         boolean_oscillating = 0
                     
-                if step > 1000:
-                    sys.exit("Je quitte a 650 !")
+                if step > 10000 and self.applyCorrectiveMethod == 1:
+                    sys.exit("Je quitte a 10000 !")
         
         return 1
+        
 
 class UpdatedNormalPlaneArcLengthAlgorithm(ArcLengthAlgorithm): # Updated normal plane arc-length method
     

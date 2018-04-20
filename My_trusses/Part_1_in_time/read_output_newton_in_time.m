@@ -36,6 +36,7 @@ while ~feof(f_PK2)
     line = fgetl(f_PK2);
     R = sscanf(line,'t=%f;PK2_bar%d=%f');
     PK2(counter) = R(3);
+    TIME(counter) = R(1);
     counter = counter + 1;
 end
 fclose(f_PK2);
@@ -107,6 +108,31 @@ plot(uy2,PK2,'.-');
 xlabel('uy2 [??]');
 ylabel('PK2 stress [???]');
 
+
+%% Plots finaux:
+configureFigure(figure);
+plot(TIME,uy2);
+xlabel('time [s]')
+ylabel('Vertical displacement [m]')
+saveas(gcf,'NR_in_time_VD_in_time.eps','epsc2');
+
+configureFigure(figure);
+plot(uy2,F)
+xlabel('Vertical displacement [m]');
+ylabel('Applied force [N]');
+saveas(gcf,'NR_in_time_Applied_force_in_VD.eps','epsc2');
+
+configureFigure(figure);
+plot(TIME,F);
+xlabel('time [s]')
+ylabel('Loading [N]');
+saveas(gcf,'NR_in_time_Loading.eps','epsc2');
+
+configureFigure(figure);
+plot(TIME,PK2);
+xlabel('time [s]')
+ylabel('PK2 stress [Pa]');
+saveas(gcf,'NR_in_time_PK2.eps','epsc2');
 end
 
 function F = get_sawtooth(t,F_max,T)

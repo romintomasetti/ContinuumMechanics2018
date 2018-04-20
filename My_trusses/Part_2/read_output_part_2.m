@@ -40,7 +40,11 @@ end
 spherical
 figure
 plot(spherical.ux2,spherical.lambda)
+return
 xlabel('ux2')
+assignin('base','UX2_SPH',spherical.ux2)
+assignin('base','UY2_SPH',spherical.uy2)
+assignin('base','LAMBDA_SPH',spherical.lambda)
 return
 % xlabel('ux2')
 % ylabel('lambda')

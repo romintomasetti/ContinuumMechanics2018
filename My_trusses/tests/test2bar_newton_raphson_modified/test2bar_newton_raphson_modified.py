@@ -56,7 +56,7 @@ def main(nogui):
     
     #Non-linear algorithm
     dlamda0 = 0.01
-    algo = QuasiNewtonAlgorithm(truss, tol, nItMax,dlamda0)
+    algo = QuasiNewtonAlgorithm(truss, tol, nItMax,dlamda0,'')
     
     #GUI --> if you want to run a test without GUI: in a command window type (without the quotation marks) 'python test.py --nogui'
     if nogui:

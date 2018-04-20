@@ -68,7 +68,7 @@ class Bar:
                     self.nodes[n].y -= 2*delta
                 P_minus = self.getFint()
                 
-                print P_plus,P_minus
+                #print P_plus,P_minus
                 
                 if j%2 == 0:
                     self.nodes[n].x += delta
@@ -77,7 +77,7 @@ class Bar:
                 for i in range(0,4):
                     Kt[i][j] = (P_plus[i]-P_minus[i])/(2*delta)
                     
-            print Kt
+            #print Kt
             
         else:
             self.numberOfKtEvals += 1

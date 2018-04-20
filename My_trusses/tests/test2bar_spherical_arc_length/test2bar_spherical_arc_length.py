@@ -12,14 +12,13 @@ from optparse import OptionParser
 import vtk
 import math
 
-def main(nogui):
-    
+def get_truss():
     #Geometry
     a = 2.0
     b = 1.0
     #sys.exit()
     l0 = math.sqrt(a**2 + b**2)
-    tol = 10**(-6)
+    tol = 10**(-10)
     nItMax = 30
     
     #Nodes
@@ -51,29 +50,27 @@ def main(nogui):
     #Loads
     node2.applyLoad('y', -1.5*qcr)
     
-    #Non-linear algorithm
-    dlamda0 = 0.05
-    psi = 1e-5
-    Id = 5
-    algo = ArcLengthAlgorithm(truss, tol, nItMax,dlamda0, psi, Id,0,'numeric')
+    return truss
+
+def main(nogui):
+    a = 2.0
+    b = 1.0
+    l0 = math.sqrt(a**2 + b**2)
+    E = 70e9
+    A = 0.01
+    qcr = (math.sqrt(3)*E*A*(b**3))/(9.0*(l0**3))
     
-    #GUI --> if you want to run a test without GUI: in a command window type (without the quotation marks) 'python test.py --nogui'
-    if nogui:
-        if vtk.VTK_MAJOR_VERSION <= 5:
-            print "I Have VTK version <=5"
-            import trussViewerVtk5PyQt4 as v
-        elif vtk.VTK_MAJOR_VERSION == 6:
-            print "I Have VTK version == 6"
-            import trussViewerVtk6PyQt4 as v
-        else:
-            print " I have VTK else"
-            import trussViewerVtk7PyQt5 as v
-        print 'Initialize MeshViewer...'
-        gui = v.MeshViewer(truss, algo) 
-        print 'MeshViewer initialized!'
-        gui.start()
-    else:
-        algo.run() # Runs the algorithm. If you are using the GUI, the GUI will take care of that
+    tol = 10**(-10)
+    nItMax = 3
+    
+    #Non-linear algorithm
+    dlamda0 = 0.01
+    psi = 1e-5
+    Id = 2
+    truss = get_truss()
+    algo = ArcLengthAlgorithm(truss, tol, nItMax,dlamda0, psi, Id,0,'')
+    
+    algo.run() # Runs the algorithm. If you are using the GUI, the GUI will take care of that
         
     # Analytical solution:
     counter = 0
@@ -131,3 +128,4 @@ if __name__ == '__main__':
     nogui = options.nogui
     
     main(nogui)
+    

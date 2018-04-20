@@ -1,8 +1,8 @@
 function read_output()
 close all
 direct = ['D:\GOOGLE DRIVE\UNIVERSITY\MASTER 1\SECOND_QUADRIMESTER\Continuum Mechanics'...
-    '\Project\My_trusses\tests\'...
-    'test2bar_updated_normal_plane_arc_length\'];
+    '\ContinuumMechanics2018\My_trusses\tests\'...
+    'test2bar_newton_raphson_modified\'];
 
 name = 'updated_normal_plane_arc_length';
 
@@ -48,6 +48,7 @@ while ~feof(f)
 end
 fclose(f);
 
+
 %%
 X = -uy2/b;
 Y = 1.5*Pcrit_analytical*lambda_;
@@ -65,7 +66,7 @@ xlabel('p/b[-]')
 ylabel('q[N]')
 leg = legend(['Steps : ' num2str(length(X))]);
 leg.Location = 'best';
-saveas(gcf,['AnalyticalPART1_' name '.eps'],'epsc2');
+%saveas(gcf,['AnalyticalPART1_' name '.eps'],'epsc2');
 
 %% Compute the error:
 poly = polyfit(X,Y,10);

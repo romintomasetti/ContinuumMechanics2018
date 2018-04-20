@@ -11,8 +11,7 @@ from optparse import OptionParser
 import vtk
 import math
 
-def main(nogui):
-    
+def get_truss():
     # Geometry:
     a     = 0.75
     b     = 0.25
@@ -58,35 +57,41 @@ def main(nogui):
     truss.fix(node4,'y')
     
     #Critical load
-    qcr = 25*(math.sqrt(3)*E_2*A_2*(b**3))/(9.0*(l0**3)) #It's the critical load divided by 2 since we consider just one bar!
+    qcr = 15*(math.sqrt(3)*E_2*A_2*(b**3))/(9.0*(l0**3)) #It's the critical load divided by 2 since we consider just one bar!
 
     #Loads
     node2.applyLoad('y', -1.5*qcr)
     node3.applyLoad('y', -1.5*qcr)
     
-    #Use a copy of the truss.
-    truss_test = truss
+    print '>>> Truss : load applied is ',-1.5*qcr
+    
+    return truss
+
+def main(nogui):
+    
+    toll = 1e-6
+    nItMax = 60
     
     #Non-linear algorithm
-    dlambda_0 = 1e-3
-    Id_0 = 20
+    dlambda_0 = 5e-3
+    Id_0 = 5
     psi_0 = 1e-8
-    print -1.5*qcr
+    
     while dlambda_0 <= 1e-2:
         Id = Id_0
-        while Id <= 100:
+        while Id <= 10:
             psi = psi_0
-            while psi <= 1:
+            while psi <= 1e-5:
                 dlamda0 = dlambda_0
                 #algo = UpdatedNormalPlaneArcLengthAlgorithm(truss_test, toll, nItMax,dlamda0, psi, Id)
                 #algo = NewtonRaphsonAlgorithm(truss,toll,nItMax,dlamda0)
-                algo = ArcLengthAlgorithm(truss,toll,nItMax,dlamda0,psi,Id,1)
+                algo = ArcLengthAlgorithm(get_truss(),toll,nItMax,dlamda0,psi,Id,1,'')
                 #algo = IncrementalAlgorithm(truss,dlamda0)
                 print "Starting with (",dlamda0,",",Id,",",psi,")."
                 returned_value = algo.run()
+                print "Returned value ",returned_value
                 sys.exit()
-                if not truss.nodes[0].x == 0:
-                    sys.exit("The algo modified the initial truss!")
+                
                 if returned_value == -77:
                     print "It failed with (",dlamda0,",",Id,",",psi,")."
                     f1 = open('spherical_results_for_loop.ascii','a')
@@ -103,9 +108,9 @@ def main(nogui):
                     f1 = open('spherical_results_for_loop.ascii','a')
                     f1.write("It failed with ("+str(dlamda0)+","+str(Id)+","+str(psi)+") because UNKNOWN.")
                     f1.close()
-                psi *= 100
+                psi *= 10
                 #End of loop on psi
-            Id += 10
+            Id += 1
             #End of loop on Id
         dlambda_0 *= 10
         #End of loop on dlambda
